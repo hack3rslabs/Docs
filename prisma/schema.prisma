@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lead {
+  id                   String        @id @default(cuid())
+  name                 String
+  email                String
+  phone                String
+  applicationToken     String?
+  applicationSubmitted Boolean       @default(false)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  lastCopiedLink       String?
+  applications         Application[]
+}
+
+model Setting {
+  id                    String   @id @default(cuid())
+  companyName           String
+  logoAlignment         String   @default("left")
+  address               String?
+  authorizedPerson      String?
+  authorizedDesignation String?
+  purpose               String?
+  place                 String?
+  phone                 String?
+  email                 String?
+  companyLogo           String?
+  stamp                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model Application {
+  id                 String   @id @default(cuid())
+  leadId             String?
+  name               String
+  email              String
+  phone              String
+  fatherName         String?
+  dob                String?
+  gender             String?
+  maritalStatus      String?
+  address            String?
+  aadhar             String?
+  pan                String?
+  aadharFile         String?
+  resume             String?
+  designation        String?
+  department         String?
+  joiningDate        String?
+  relievingDate      String?
+  ctc                String?
+  companyName        String?
+  jobType            String?
+  mentorName         String?
+  mentorDesignation  String?
+  dateDocument       String?
+  empId              String?
+  approved           Boolean  @default(false)
+  bankName           String?
+  accountNumber      String?
+  ifsc               String?
+  branchName         String?
+  bankPassbook       String?
+  uan                String?
+  esi                String?
+  pfFile             String?
+  offerDate          String?
+  appointmentDate    String?
+  experienceDate     String?
+  internshipDate     String?
+  nocDate            String?
+  payslipDate        String?
+  hikeDate           String?
+  workingDays        Int?
+  referenceFile      String?
+  hikeAmount         String?
+  hikeIssueDate      String?
+  basic              Float?
+  houseRentAllowance Float?
+  statutoryBonus     Float?
+  employerEsi        Float?
+  employerPf         Float?
+  employeeEsi        Float?
+  providentFund      Float?
+  professionalTax    Float?
+  grossSalary        Float?
+  totalContribution  Float?
+  totalDeduction     Float?
+  netTakeHome        Float?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  lead               Lead?    @relation(fields: [leadId], references: [id])
+}

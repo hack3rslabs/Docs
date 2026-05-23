@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 89%;
+    --input: 0 0% 89%;
+    --ring: 0 0% 0%;
+
+    --radius: 0.5rem;
+
+    /* Dashboard specific colors - Black and White Theme */
+    --sidebar-bg: 0 0% 0%;
+    --sidebar-text: 0 0% 100%;
+    --sidebar-text-secondary: 0 0% 70%;
+    --sidebar-hover: 0 0% 15%;
+    --sidebar-active: 0 0% 100%;
+    
+    --topnav-bg: 0 0% 100%;
+    --topnav-border: 0 0% 89%;
+    
+    --dashboard-bg: 0 0% 98%;
+    
+    /* Transitions */
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@layer base {
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+@theme {
+  --color-dashboard-sidebar-bg: hsl(var(--sidebar-bg));
+  --color-dashboard-sidebar-text: hsl(var(--sidebar-text));
+  --color-dashboard-sidebar-secondary: hsl(var(--sidebar-text-secondary));
+  --color-dashboard-sidebar-hover: hsl(var(--sidebar-hover));
+  --color-dashboard-sidebar-active: hsl(var(--sidebar-active));
+  --color-dashboard-bg: hsl(var(--dashboard-bg));
+  --transition-property-smooth: var(--transition-smooth);
+}
