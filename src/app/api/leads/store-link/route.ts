@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { verifyAuth, unauthorizedResponse } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
+    const auth = await verifyAuth(request);
+    if (!auth) return unauthorizedResponse();
+
     const { leadId, applicationLink } = await request.json();
 
     if (!leadId || !applicationLink) {

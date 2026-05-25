@@ -39,7 +39,7 @@ const ApplicationFormContent = () => {
     aadharFile: File | null;
     resume: File | null;
     bankPassbook: File | null;
-    pfFile: File | null;
+    panFile: File | null;
     referenceFile: string;
   }>({
     fatherName: "",
@@ -63,7 +63,7 @@ const ApplicationFormContent = () => {
     aadharFile: null,
     resume: null,
     bankPassbook: null,
-    pfFile: null,
+    panFile: null,
     referenceFile: "",
   });
 
@@ -147,7 +147,7 @@ const ApplicationFormContent = () => {
           aadharFile: null,
           resume: null,
           bankPassbook: null,
-          pfFile: null,
+          panFile: null,
           referenceFile: "",
         });
       }
@@ -159,7 +159,7 @@ const ApplicationFormContent = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white rounded shadow">
       <h2 className="text-2xl font-bold mb-6 text-center">
-        Employee Application Form
+        Employee Onboarding Application Form
       </h2>
 
       {/* TWO COLUMN GRID  */}
@@ -297,29 +297,32 @@ const ApplicationFormContent = () => {
               </label>
 
               <label>
-                <span className="text-sm">Upload Resume</span>
+                <span className="text-sm">Upload PAN</span>
                 <input
                   type="file"
-                  name="resume"
-                  accept=".pdf,.doc,.docx"
+                  name="panFile"
+                  accept=".pdf"
                   onChange={handleFileChange}
                   className="border p-2 rounded w-full"
                 />
               </label>
+
+
             </div>
           </section>
 
           {/* Upload Documents */}
           <section className="border p-4 rounded bg-gray-50">
-            <h3 className="text-lg font-semibold mb-4">PF File</h3>
+            <h3 className="text-lg font-semibold mb-4">Resume Upload (PDF Only)</h3>
             <label>
-              <span className="text-sm">Upload PF File</span>
+              <span className="text-sm text-red-600 font-bold">* Mandatory Resume (PDF)</span>
               <input
                 type="file"
-                name="pfFile"
+                name="resume"
                 accept=".pdf"
+                required
                 onChange={handleFileChange}
-                className="border p-2 rounded w-full"
+                className="border p-2 rounded w-full mt-2"
               />
             </label>
           </section>
@@ -432,7 +435,7 @@ const ApplicationFormContent = () => {
               </label>
 
               <label>
-                <span className="text-sm">Upload Passbook</span>
+                <span className="text-sm">EPF Service History</span>
                 <input
                   type="file"
                   name="bankPassbook"

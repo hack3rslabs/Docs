@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { verifyAuth, unauthorizedResponse } from '@/lib/auth';
 import crypto from 'crypto';
 
 // GET: Fetch all leads
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const auth = await verifyAuth(request);
+    if (!auth) return unauthorizedResponse();
+
     const leads = await prisma.lead.findMany({
       orderBy: { createdAt: 'desc' },
     });
@@ -22,7 +26,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     console.log('📥 Create lead request:', body);
-    const { name, email, phone } = body;
+    const { name, email, phone, paymentAmount } = body;
 
     if (!name || !email || !phone) {
       return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
@@ -50,6 +54,8 @@ export async function POST(request: Request) {
         leadId: lead.id,
         _id: lead.id, // For compatibility
         link: existingLink,
+        paymentStatus: lead.paymentStatus,
+        paymentAmount: lead.paymentAmount
       });
     }
 
@@ -61,6 +67,8 @@ export async function POST(request: Request) {
         email,
         phone,
         applicationToken: token,
+        paymentAmount: paymentAmount ? parseFloat(paymentAmount) : 15000,
+        paymentStatus: 'Pending'
       },
     });
 
@@ -72,6 +80,8 @@ export async function POST(request: Request) {
       leadId: lead.id,
       _id: lead.id, // For compatibility
       link,
+      paymentAmount: lead.paymentAmount,
+      paymentStatus: lead.paymentStatus
     }, { status: 201 });
   } catch (err: any) {
     console.error('❌ Create lead error:', err);

@@ -65,3 +65,49 @@
   --color-dashboard-bg: hsl(var(--dashboard-bg));
   --transition-property-smooth: var(--transition-smooth);
 }
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+}
+
+@layer utilities {
+  .gross-earnings-table {
+    @apply w-full border-collapse border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white;
+  }
+  .gross-earnings-header {
+    @apply bg-gray-900 text-white text-[11px] font-black uppercase tracking-wider px-6 py-4 text-left;
+  }
+  .gross-earnings-row {
+    @apply border-b border-gray-100 transition-colors hover:bg-gray-50;
+  }
+  .gross-earnings-row-alt {
+    @apply bg-gray-50/50 border-b border-gray-100 transition-colors hover:bg-gray-50;
+  }
+  .gross-earnings-cell {
+    @apply px-6 py-4 text-sm font-bold text-gray-700;
+  }
+  .gross-earnings-label {
+    @apply text-gray-400 font-medium text-[10px] uppercase tracking-widest;
+  }
+}

@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { verifyAuth, unauthorizedResponse } from '@/lib/auth';
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await verifyAuth(request);
+    if (!auth) return unauthorizedResponse();
+
     const { id } = await params;
     const { type, date } = await request.json();
 

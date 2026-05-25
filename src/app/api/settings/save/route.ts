@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { verifyAuth, unauthorizedResponse } from '@/lib/auth';
 import fs from 'fs';
 import path from 'path';
 
 export async function POST(request: Request) {
   try {
+    const auth = await verifyAuth(request);
+    if (!auth) return unauthorizedResponse();
+
     const formData = await request.formData();
     const companyName = formData.get('companyName') as string;
     const id = formData.get('_id') as string;
@@ -19,6 +23,7 @@ export async function POST(request: Request) {
       place: formData.get('place') as string,
       phone: formData.get('phone') as string,
       email: formData.get('email') as string,
+      webAddress: formData.get('webAddress') as string,
     };
 
     // Handle File Uploads

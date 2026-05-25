@@ -25,6 +25,8 @@ model Lead {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
   lastCopiedLink       String?
+  paymentAmount        Float?        @default(15000)
+  paymentStatus        String?       @default("Pending") // Pending, Paid, Waived
   applications         Application[]
 }
 
@@ -39,6 +41,7 @@ model Setting {
   place                 String?
   phone                 String?
   email                 String?
+  webAddress            String?
   companyLogo           String?
   stamp                 String?
   createdAt             DateTime @default(now())
@@ -58,6 +61,7 @@ model Application {
   address            String?
   aadhar             String?
   pan                String?
+  panFile            String?
   aadharFile         String?
   resume             String?
   designation        String?
@@ -91,18 +95,24 @@ model Application {
   referenceFile      String?
   hikeAmount         String?
   hikeIssueDate      String?
+  pfStatus           String?
+  remarks            String?
   basic              Float?
   houseRentAllowance Float?
   statutoryBonus     Float?
+  specialAllowance   Float?
+  monthlyCtc         Float?
   employerEsi        Float?
   employerPf         Float?
   employeeEsi        Float?
   providentFund      Float?
   professionalTax    Float?
+  tds                Float?
   grossSalary        Float?
   totalContribution  Float?
   totalDeduction     Float?
   netTakeHome        Float?
+  annualCtc          Float?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   lead               Lead?    @relation(fields: [leadId], references: [id])

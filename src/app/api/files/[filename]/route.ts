@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { verifyAuth, unauthorizedResponse } from '@/lib/auth';
 import fs from 'fs';
 import path from 'path';
 
@@ -7,6 +8,9 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
+    const auth = await verifyAuth(request);
+    if (!auth) return unauthorizedResponse();
+
     const { filename } = await params;
     const filePath = path.join(process.cwd(), 'uploads', filename);
 

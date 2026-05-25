@@ -10,11 +10,10 @@ const WelcomeCard = () => {
             <span className="text-muted-foreground text-sm">Welcome Back</span>
           </div>
           <h1 className="text-2xl font-bold text-primary mb-4">Utham</h1>
-          <p className="text-muted-foreground text-sm leading-relaxed max-w-md">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Unde hic non 
-            repellendus debitis iure, doloremque assumenda. Autem modi, 
-            corrupti, nobis ea iure fugiat, veniam non quaerat mollitia animi error 
-            corporis.
+          <p className="text-zinc-500 text-xs font-bold leading-relaxed max-w-md uppercase tracking-tight">
+            Manage your Training Center operations, track leads, and generate 
+            MNC-compliant corporate documentation with our automated payroll 
+            and compliance engine.
           </p>
         </div>
         <div className="flex-shrink-0 ml-6">
