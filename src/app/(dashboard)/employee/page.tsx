@@ -19,6 +19,8 @@ interface Application {
   phone: string;
   companyName: string;
   jobType: string;
+  pan?: string;
+  uan?: string;
   mentorName?: string;
   mentorDesignation?: string;
   joiningDate?: string;
@@ -39,6 +41,10 @@ interface Application {
   // Hike
   hikeIssueDate?: string;
   hikeAmount?: string;
+  hikeDate?: string;
+
+  hikeLetters?: any[];
+  auditLogs?: any[];
 }
 
 const API = (process.env.NEXT_PUBLIC_API_BASE || "/api");
@@ -221,30 +227,24 @@ const Employee = () => {
   });
 
   // ======================================================
-  // UPDATE HIKE DATA
+  // CREATE HIKE DATA
   // ======================================================
+  const [newHike, setNewHike] = useState({ hikeAmount: "", hikeIssueDate: "", hikeDate: "" });
+
   const saveHikeMutation = useMutation({
-    mutationFn: async ({
-      id,
-      hikeIssueDate,
-      hikeAmount,
-    }: {
-      id: string;
-      hikeIssueDate: string;
-      hikeAmount: string;
-    }) => {
+    mutationFn: async (payload: any) => {
       const token = localStorage.getItem("token");
-      const { data } = await axios.patch(
-        `${API}/update-hike/${id}`,
-        { hikeIssueDate, hikeAmount },
+      const { data } = await axios.post(
+        `${API}/hikes`,
+        payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      return data.application;
+      return data.hikeLetter;
     },
-    onSuccess: (updatedApp: Application) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["applications"] });
-      if (selectedApp?.id === updatedApp.id) setSelectedApp(updatedApp);
-      alert("Hike details saved!");
+      alert("Hike letter created successfully! Please refresh or re-open the employee to see it in history.");
+      setNewHike({ hikeAmount: "", hikeIssueDate: "", hikeDate: "" });
     },
   });
 
@@ -279,7 +279,7 @@ const Employee = () => {
       setTimeout(() => window.URL.revokeObjectURL(url), 100);
     } catch (err: any) {
       console.error("Document processing error:", err);
-      let errorMsg = "Failed to process document.";
+      const errorMsg = "Failed to process document.";
       if (err.response?.data instanceof Blob) {
         // Try to read the error message from the blob
         const reader = new FileReader();
@@ -496,7 +496,7 @@ const Employee = () => {
       <div className="relative flex-1 sm:flex-none sm:w-64">
         <input
           type="text"
-          placeholder="Search by name..."
+          placeholder="Search by Name, Phone, Email, PAN, UAN..."
           value={searchName}
           onChange={(e) => setSearchName(e.target.value)}
           className="border p-2 pl-10 rounded w-full text-sm"
@@ -524,9 +524,16 @@ const Employee = () => {
 
             <tbody>
               {applications
-                .filter((app) =>
-                  app.name.toLowerCase().includes(searchName.toLowerCase())
-                )
+                .filter((app) => {
+                  const s = searchName.toLowerCase();
+                  return (
+                    (app.name && app.name.toLowerCase().includes(s)) ||
+                    (app.email && app.email.toLowerCase().includes(s)) ||
+                    (app.phone && app.phone.toLowerCase().includes(s)) ||
+                    (app.pan && app.pan.toLowerCase().includes(s)) ||
+                    (app.uan && app.uan.toLowerCase().includes(s))
+                  );
+                })
                 .map((app) => (
                   <tr key={app.id}>
                     <td className="border px-4 py-2">{app.name}</td>
@@ -631,7 +638,13 @@ const Employee = () => {
         overflow-hidden
       "
     >
-      <div className="bg-blue-700 p-8 text-white">
+      <div className="bg-blue-700 p-8 text-white relative">
+        <button 
+          onClick={() => setSelectedApp(null)}
+          className="absolute top-4 right-4 text-blue-200 hover:text-white bg-blue-800 hover:bg-blue-900 rounded-full p-1.5 transition-all"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
         <h3 className="text-2xl font-black uppercase tracking-tighter">
           {selectedApp.jobType === "Internship" ? "Internship Dossier" : "Employee Documents"}
         </h3>
@@ -776,57 +789,81 @@ const Employee = () => {
               </button>
             </div>
 
-            {/* HIKE */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-t pt-4 bg-zinc-50 p-4 rounded-xl border border-zinc-100 shadow-sm">
-               <div className="flex flex-col">
-                <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-1.5 text-center md:text-left">Hike Letter</p>
-                <div className="flex gap-2">
-                  <button
-                    className="px-4 py-2 w-28 text-white bg-yellow-600 hover:bg-yellow-700 rounded-lg font-black uppercase text-[10px] shadow-sm"
-                    onClick={() => handleDownload(selectedApp, "hike-letter")}
-                  >
-                    Download
-                  </button>
-                  <button
-                    onClick={() => handleDownload(selectedApp, "hike-letter", true)}
-                    className="px-4 py-2 w-16 bg-white border border-zinc-200 text-zinc-600 rounded-lg font-black uppercase text-[10px] hover:bg-zinc-100 shadow-sm transition-all"
-                  >
-                    View
-                  </button>
+            {/* HIKE LETTERS HISTORY & CREATION */}
+            <div className="flex flex-col gap-4 border-t pt-4 bg-zinc-50 p-4 rounded-xl border border-zinc-100 shadow-sm">
+              <p className="text-[10px] font-black uppercase text-zinc-400 tracking-widest text-center md:text-left">Hike Letters History</p>
+              
+              {/* History List */}
+              {selectedApp.hikeLetters && selectedApp.hikeLetters.length > 0 ? (
+                <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
+                  {selectedApp.hikeLetters.map((hike: any) => (
+                    <div key={hike.id} className="flex justify-between items-center bg-white p-3 rounded-lg border border-zinc-100 shadow-sm">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-zinc-700">₹{hike.hikeAmount.toLocaleString()} Hike (Eff: {hike.hikeDate})</span>
+                        <span className="text-[10px] text-zinc-500">Issued: {hike.hikeIssueDate} | Old CTC: ₹{hike.previousCtc?.toLocaleString()} → New CTC: ₹{hike.newCtc?.toLocaleString()}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => window.open(`/api/generate/hike-letter/${hike.id}`, "_blank")} className="px-3 py-1 bg-white border border-zinc-200 text-zinc-600 rounded text-[10px] font-bold hover:bg-zinc-50 shadow-sm">View</button>
+                        <button onClick={() => window.open(`/api/generate/hike-letter/${hike.id}?download=true`, "_blank")} className="px-3 py-1 bg-yellow-600 text-white rounded text-[10px] font-bold hover:bg-yellow-700 shadow-sm">Download</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-400 italic text-center">No hike history available.</p>
+              )}
+
+              {/* Create New Hike Form */}
+              <div className="mt-2 pt-4 border-t border-zinc-200 flex flex-col gap-3">
+                <p className="text-[10px] font-black uppercase text-blue-500 tracking-widest text-center md:text-left">Issue New Hike</p>
+                <div className="flex flex-wrap gap-3 items-end justify-between">
+                  <div className="flex gap-3">
+                    <input type="number" placeholder="Amt (₹)" className="border border-zinc-200 bg-white px-3 py-2 rounded-lg w-24 text-sm font-black text-blue-600" value={newHike.hikeAmount} onChange={(e) => setNewHike({ ...newHike, hikeAmount: e.target.value })} />
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-bold text-zinc-400 uppercase mb-1">Issue Date</span>
+                      <input type="date" className="border border-zinc-200 bg-white px-2 py-2 rounded-lg text-sm font-mono font-bold text-zinc-600 w-32" value={newHike.hikeIssueDate} onChange={(e) => setNewHike({ ...newHike, hikeIssueDate: e.target.value })} />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-bold text-zinc-400 uppercase mb-1">Eff. Date</span>
+                      <input type="date" className="border border-zinc-200 bg-white px-2 py-2 rounded-lg text-sm font-mono font-bold text-zinc-600 w-32" value={newHike.hikeDate} onChange={(e) => setNewHike({ ...newHike, hikeDate: e.target.value })} />
+                    </div>
+                  </div>
+                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-black uppercase text-[10px] shadow-md hover:bg-blue-700 transition-all" onClick={() => saveHikeMutation.mutate({ applicationId: selectedApp.id, ...newHike })}>Issue Hike</button>
                 </div>
               </div>
+            </div>
 
-              <input
-                type="date"
-                className="border border-zinc-200 bg-white px-3 py-2 rounded-lg w-40 text-sm font-mono font-bold text-zinc-600"
-                value={selectedApp.hikeIssueDate || ""}
-                onChange={(e) =>
-                  setSelectedApp({ ...selectedApp, hikeIssueDate: e.target.value })
-                }
-              />
-
-              <input
-                type="number"
-                placeholder="Amt"
-                className="border border-zinc-200 bg-white px-3 py-2 rounded-lg w-20 text-sm font-black text-center text-blue-600"
-                value={selectedApp.hikeAmount || ""}
-                onChange={(e) =>
-                  setSelectedApp({ ...selectedApp, hikeAmount: e.target.value })
-                }
-              />
-
-              <button
-                className="px-4 py-2 bg-green-600 text-white rounded-lg font-black uppercase text-[10px] w-20 shadow-md hover:bg-green-700 transition-all"
-                onClick={() =>
-                  saveHikeMutation.mutate({
-                    id: selectedApp.id,
-                    hikeIssueDate: selectedApp.hikeIssueDate || "",
-                    hikeAmount: selectedApp.hikeAmount || "0",
-                  })
-                }
-              >
-                Save
-              </button>
+            {/* AUDIT LOGS */}
+            <div className="flex flex-col gap-4 mt-6 bg-zinc-50 p-4 rounded-xl border border-zinc-100 shadow-sm">
+              <p className="text-[10px] font-black uppercase text-zinc-400 tracking-widest text-center md:text-left">Edit History (Audit Logs)</p>
+              {selectedApp.auditLogs && selectedApp.auditLogs.length > 0 ? (
+                <div className="max-h-60 overflow-y-auto border border-zinc-200 rounded-lg">
+                  <table className="w-full text-left text-xs bg-white">
+                    <thead className="bg-zinc-100 text-zinc-500 uppercase font-black text-[9px] sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2">Field</th>
+                        <th className="px-3 py-2">Old Value</th>
+                        <th className="px-3 py-2">New Value</th>
+                        <th className="px-3 py-2">Modified By</th>
+                        <th className="px-3 py-2">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {selectedApp.auditLogs.map((log: any) => (
+                        <tr key={log.id} className="hover:bg-zinc-50 transition-colors">
+                          <td className="px-3 py-2 font-bold text-zinc-700">{log.field}</td>
+                          <td className="px-3 py-2 text-red-500 line-through truncate max-w-[100px]" title={log.oldValue}>{String(log.oldValue || '—')}</td>
+                          <td className="px-3 py-2 text-green-600 font-bold truncate max-w-[100px]" title={log.newValue}>{String(log.newValue || '—')}</td>
+                          <td className="px-3 py-2 text-zinc-500">{log.modifiedBy}</td>
+                          <td className="px-3 py-2 text-zinc-400 font-mono text-[9px] whitespace-nowrap">{new Date(log.createdAt).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-400 italic text-center">No edits recorded yet.</p>
+              )}
             </div>
 
             {/* MANUAL CTC OVERRIDE */}

@@ -21,6 +21,14 @@ export async function PUT(
       return NextResponse.json({ success: false, message: 'Invalid Application ID' }, { status: 400 });
     }
 
+    const existingApp = await prisma.application.findUnique({ where: { id } });
+    if (!existingApp) {
+      return NextResponse.json({ success: false, message: 'Application not found' }, { status: 404 });
+    }
+    if (auth.companyId && existingApp.companyId && existingApp.companyId !== auth.companyId) {
+      return unauthorizedResponse();
+    }
+
     const contentType = request.headers.get('content-type') || '';
     const body: Record<string, string | number | boolean | File | null> = {};
     
@@ -130,6 +138,23 @@ export async function PUT(
     }
 
     try {
+      const auditLogs = [];
+      for (const key in finalUpdateData) {
+        if (finalUpdateData[key] !== (existingApp as any)[key]) {
+          auditLogs.push({
+            applicationId: id,
+            field: key,
+            oldValue: String((existingApp as any)[key] ?? ''),
+            newValue: String(finalUpdateData[key] ?? ''),
+            modifiedBy: auth.email
+          });
+        }
+      }
+
+      if (auditLogs.length > 0) {
+        await prisma.auditLog.createMany({ data: auditLogs });
+      }
+
       const updated = await prisma.application.update({
         where: { id },
         data: finalUpdateData,
@@ -160,11 +185,15 @@ export async function GET(
     const { id } = await params;
     const application = await prisma.application.findUnique({
       where: { id },
-      include: { lead: true }
+      include: { lead: true, auditLogs: { orderBy: { createdAt: 'desc' } }, hikeLetters: { orderBy: { createdAt: 'desc' } } }
     });
 
     if (!application) {
       return NextResponse.json({ success: false, message: 'Application not found' }, { status: 404 });
+    }
+
+    if (auth.companyId && application.companyId && application.companyId !== auth.companyId) {
+      return unauthorizedResponse();
     }
 
     // Decrypt sensitive fields
@@ -192,6 +221,14 @@ export async function DELETE(
 
     const { id } = await params;
     
+    const existingApp = await prisma.application.findUnique({ where: { id } });
+    if (!existingApp) {
+      return NextResponse.json({ success: false, message: 'Application not found' }, { status: 404 });
+    }
+    if (auth.companyId && existingApp.companyId && existingApp.companyId !== auth.companyId) {
+      return unauthorizedResponse();
+    }
+
     // Optional: Delete associated lead as well?
     // For now just delete the application
     await prisma.application.delete({

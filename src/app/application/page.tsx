@@ -16,6 +16,9 @@ const ApplicationFormContent = () => {
 
   const [lead, setLead] = useState<Lead | null>(null);
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [formData, setFormData] = useState<{
     fatherName: string;
@@ -95,6 +98,9 @@ const ApplicationFormContent = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting || isSuccess) return;
+    
+    setIsSubmitting(true);
     setMessage("");
 
     try {
@@ -118,43 +124,42 @@ const ApplicationFormContent = () => {
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      setMessage(
-        res.data.success
-          ? "✅ Application submitted successfully!"
-          : "⚠️ Failed to submit."
-      );
-
       if (res.data.success) {
-        setFormData({
-          fatherName: "",
-          dob: "",
-          gender: "",
-          maritalStatus: "",
-          address: "",
-          aadhar: "",
-          pan: "",
-          designation: "",
-          department: "",
-          joiningDate: "",
-          relievingDate: "",
-          ctc: "",
-          bankName: "",
-          accountNumber: "",
-          ifsc: "",
-          branchName: "",
-          uan: "",
-          esi: "",
-          aadharFile: null,
-          resume: null,
-          bankPassbook: null,
-          panFile: null,
-          referenceFile: "",
-        });
+        setIsSuccess(true);
+      } else {
+        setMessage("⚠️ Failed to submit: " + (res.data.message || "Unknown error"));
       }
-    } catch {
-      setMessage("❌ Error submitting application.");
+    } catch (err: any) {
+      console.error("Submission failed", err);
+      setMessage("❌ Error submitting application. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center space-y-6 border border-gray-100">
+          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-black text-gray-800 tracking-tight">Submission Successful!</h2>
+          <p className="text-gray-600 text-sm leading-relaxed">
+            Thank you for submitting your information. Your submission has been received successfully.
+          </p>
+          <div className="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm font-semibold">
+            Our team will review your submission and get back to you shortly.
+          </div>
+          <p className="text-gray-400 text-xs font-medium uppercase tracking-widest pt-4 border-t border-gray-100">
+            You may now close this page.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white rounded shadow">
@@ -469,12 +474,36 @@ const ApplicationFormContent = () => {
             />
           </section>
 
+          {/* Terms and Conditions */}
+          <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-xl mb-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input 
+                type="checkbox" 
+                className="mt-1 w-5 h-5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+              />
+              <span className="text-sm text-zinc-600 leading-relaxed font-medium">
+                I hereby declare that the information provided in this application is true and correct to the best of my knowledge and belief. I understand that any false or misleading information may result in my disqualification from the hiring process or termination of employment. By submitting this form, I agree to the terms and conditions and authorize the company to verify this information.
+              </span>
+            </label>
+          </div>
+
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700"
+            disabled={isSubmitting || !acceptedTerms}
+            className="w-full bg-green-600 text-white py-4 rounded hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-bold transition-all shadow-md"
           >
-            Submit Application
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </>
+            ) : "Submit Application"}
           </button>
         </div>
       </form>

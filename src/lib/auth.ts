@@ -3,7 +3,13 @@ import jwt from 'jsonwebtoken';
 
 const SECRET = process.env.JWT_SECRET;
 
-export async function verifyAuth(request: Request) {
+export interface AuthPayload {
+  id: string;
+  email: string;
+  companyId?: string | null;
+}
+
+export async function verifyAuth(request: Request): Promise<AuthPayload | null> {
   if (!SECRET) {
     console.error('JWT_SECRET missing in verifyAuth');
     return null;
@@ -15,9 +21,9 @@ export async function verifyAuth(request: Request) {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, SECRET);
+    const decoded = jwt.verify(token, SECRET) as AuthPayload;
     return decoded;
-  } catch (err) {
+  } catch {
     return null;
   }
 }

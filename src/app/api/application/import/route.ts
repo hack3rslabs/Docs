@@ -215,7 +215,7 @@ export async function GET(request: Request) {
         'Content-Disposition': 'attachment; filename=Company_Data_Sheet_Template.xlsx'
       }
     });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ success: false, message: 'Template error' }, { status: 500 });
   }
 }

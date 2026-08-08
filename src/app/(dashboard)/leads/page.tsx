@@ -85,7 +85,7 @@ const Leads: React.FC = () => {
   const [empId, setEmpId] = useState("");
   const [isCustomEmpId, setIsCustomEmpId] = useState(false);
   const [searchName, setSearchName] = useState("");
-  const [activeTab, setActiveTab] = useState<'personal' | 'professional' | 'bank' | 'dates' | 'salary'>('personal');
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   // ✅ Update payment status mutation
   const updatePaymentMutation = useMutation({
@@ -104,6 +104,7 @@ const Leads: React.FC = () => {
   // Update empId helper
   const updateEmpIdForApp = (app: Application | null) => {
     if (app) {
+      // eslint-disable-next-line
       const targetId = app.empId || `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
       setEmpId(targetId);
     } else {
@@ -580,7 +581,7 @@ const Leads: React.FC = () => {
 
       {/* -------------------- POPUPS -------------------- */}
       {editingApp && !showAssignPopup && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
             {/* Header */}
             <div className="flex justify-between items-center border-b p-6 bg-gradient-to-r from-gray-50 to-white">
@@ -636,7 +637,7 @@ const Leads: React.FC = () => {
                                     });
                                     const url = window.URL.createObjectURL(new Blob([res.data], { type: res.data.type || res.headers['content-type'] }));
                                     window.open(url, '_blank');
-                                  } catch (err) {
+                                  } catch {
                                     alert("Failed to view file.");
                                   }
                                 }}
@@ -659,7 +660,7 @@ const Leads: React.FC = () => {
                                     document.body.appendChild(link);
                                     link.click();
                                     link.parentNode?.removeChild(link);
-                                  } catch (err) {
+                                  } catch {
                                     alert("Failed to download file.");
                                   }
                                 }}
@@ -774,204 +775,166 @@ const Leads: React.FC = () => {
 
     {/* Popup for Assigning */}
 {showAssignPopup && editingApp && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-white w-[90%] max-w-md rounded shadow-lg p-6">
-      <h3 className="text-lg font-semibold mb-4">Assign Company, Job & Mentor</h3>
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-zinc-100 bg-zinc-50 flex justify-between items-center shrink-0">
+        <h3 className="text-lg font-black text-zinc-800 uppercase tracking-tight">Application Verification</h3>
+        <button onClick={() => setShowAssignPopup(false)} className="text-zinc-400 hover:text-zinc-600">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
-      <div className="space-y-4">
-
-        {/* EMPLOYEE ID with Checkbox */}
-    <div>
-       <label className="block mb-1 font-medium text-gray-700">Employee ID</label>
-
-        <input
-          type="text"
-          value={empId}
-          onChange={(e) => {
-            if (isCustomEmpId) {
-              setEmpId(e.target.value);
-              setAssignData({ ...assignData, empId: e.target.value });
-            }
-          }}
-          readOnly={!isCustomEmpId}
-          className={`border p-2 w-full rounded ${
-            !isCustomEmpId ? "bg-gray-100 cursor-not-allowed" : ""
-          }`}
-        />
-
-          {/* Checkbox to enable custom ID */}
-          <div className="mt-2 flex items-center gap-2">
+      {/* Scrollable Content Area */}
+      <div className="p-6 overflow-y-auto space-y-5 custom-scrollbar">
+        
+        {/* EMPLOYEE ID */}
+        <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-100 space-y-3">
+          <label className="block text-xs font-black uppercase text-zinc-500 tracking-widest">Employee ID</label>
+          <input
+            type="text"
+            value={empId}
+            onChange={(e) => {
+              if (isCustomEmpId) {
+                setEmpId(e.target.value);
+                setAssignData({ ...assignData, empId: e.target.value });
+              }
+            }}
+            readOnly={!isCustomEmpId}
+            className={`w-full px-4 py-2.5 text-sm font-bold border rounded-xl transition-all focus:ring-2 focus:ring-blue-500 outline-none ${
+              !isCustomEmpId ? "bg-zinc-100 border-zinc-200 text-zinc-500 cursor-not-allowed" : "bg-white border-zinc-300 text-zinc-900"
+            }`}
+          />
+          <div className="flex items-center gap-2">
             <input
               type="checkbox"
+              id="customEmpIdCheck"
               checked={isCustomEmpId}
               onChange={(e) => {
                 setIsCustomEmpId(e.target.checked);
-
                 if (!e.target.checked) {
-                  // Reset to ORIGINAL stored ID or a new random one
                   const originalId = editingApp?.empId || `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
                   setEmpId(originalId);
                   setAssignData({ ...assignData, empId: originalId });
                 }
               }}
+              className="w-4 h-4 text-blue-600 rounded border-zinc-300 focus:ring-blue-500"
             />
-
-            <label className="text-sm text-gray-700">
+            <label htmlFor="customEmpIdCheck" className="text-xs font-bold text-zinc-600 cursor-pointer">
               Enable manual Employee ID entry
             </label>
           </div>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* Company Name */}
+          <div>
+            <label className="block mb-1.5 text-[11px] font-black uppercase text-zinc-500 tracking-wider">Company</label>
+            <select
+              value={assignData.companyName}
+              onChange={(e) => setAssignData({ ...assignData, companyName: e.target.value })}
+              className="w-full px-4 py-2.5 bg-white border border-zinc-300 rounded-xl text-sm font-bold text-zinc-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
+            >
+              <option value="">-- Select --</option>
+              {companies.map((c, i) => (
+                <option key={i} value={c.name}>{c.name}</option>
+              ))}
+            </select>
+          </div>
 
-        {/* Company Name */}
-        <div>
-          <label className="block mb-1 font-medium">Company Name</label>
-          <select
-            value={assignData.companyName}
-            onChange={(e) =>
-              setAssignData({ ...assignData, companyName: e.target.value })
-            }
-            className="border p-2 w-full rounded"
-          >
-            <option value="">-- Select Company --</option>
-            {companies.length > 0 ? (
-              companies.map((c, i) => (
-                <option key={i} value={c.name}>
-                  {c.name}
-                </option>
-              ))
-            ) : (
-              <option disabled>No companies available</option>
-            )}
-          </select>
-        </div>
+          {/* Job Type */}
+          <div>
+            <label className="block mb-1.5 text-[11px] font-black uppercase text-zinc-500 tracking-wider">Job Type</label>
+            <select
+              value={assignData.jobType}
+              onChange={(e) => setAssignData({ ...assignData, jobType: e.target.value })}
+              className="w-full px-4 py-2.5 bg-white border border-zinc-300 rounded-xl text-sm font-bold text-zinc-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
+            >
+              <option value="">-- Select --</option>
+              <option value="Internship">Internship</option>
+              <option value="Full Time">Full Time</option>
+            </select>
+          </div>
 
-        {/* Job Type */}
-        <div>
-          <label className="block mb-1 font-medium">Job Type</label>
-          <select
-            value={assignData.jobType}
-            onChange={(e) =>
-              setAssignData({ ...assignData, jobType: e.target.value })
-            }
-            className="border p-2 w-full rounded"
-          >
-            <option value="">-- Select Job Type --</option>
-            <option value="Internship">Internship</option>
-            <option value="Full Time">Full Time</option>
-          </select>
-        </div>
+          {/* Candidate Designation */}
+          <div>
+            <label className="block mb-1.5 text-[11px] font-black uppercase text-zinc-500 tracking-wider">Designation</label>
+            <input
+              type="text"
+              value={assignData.designation}
+              onChange={(e) => setAssignData({ ...assignData, designation: e.target.value })}
+              placeholder={editingApp?.designation || "e.g., Software Engineer"}
+              className="w-full px-4 py-2.5 bg-white border border-zinc-300 rounded-xl text-sm font-bold text-zinc-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
 
-        {/* Mentor Name */}
-        <div>
-          <label className="block mb-1 font-medium">Mentor Name</label>
-          <input
-            type="text"
-            value={assignData.mentorName}
-            onChange={(e) =>
-              setAssignData({ ...assignData, mentorName: e.target.value })
-            }
-            className="border p-2 w-full rounded"
-          />
-        </div>
+          {/* Candidate Department */}
+          <div>
+            <label className="block mb-1.5 text-[11px] font-black uppercase text-zinc-500 tracking-wider">Department</label>
+            <input
+              type="text"
+              value={assignData.department}
+              onChange={(e) => setAssignData({ ...assignData, department: e.target.value })}
+              placeholder={editingApp?.department || "e.g., Engineering"}
+              className="w-full px-4 py-2.5 bg-white border border-zinc-300 rounded-xl text-sm font-bold text-zinc-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
 
-        {/* Mentor Designation */}
-        <div>
-          <label className="block mb-1 font-medium">Mentor Designation</label>
-          <input
-            type="text"
-            value={assignData.mentorDesignation}
-            onChange={(e) =>
-              setAssignData({ ...assignData, mentorDesignation: e.target.value })
-            }
-            className="border p-2 w-full rounded"
-          />
-        </div>
+          {/* Reporting Manager Name */}
+          <div>
+            <label className="block mb-1.5 text-[11px] font-black uppercase text-zinc-500 tracking-wider">Reporting Manager</label>
+            <input
+              type="text"
+              value={assignData.mentorName}
+              onChange={(e) => setAssignData({ ...assignData, mentorName: e.target.value })}
+              placeholder="Manager Name"
+              className="w-full px-4 py-2.5 bg-white border border-zinc-300 rounded-xl text-sm font-bold text-zinc-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
 
-        {/* Candidate Designation */}
-        <div>
-          <label className="block mb-1 font-medium">Candidate Designation</label>
-          <input
-            type="text"
-            value={assignData.designation}
-            onChange={(e) =>
-              setAssignData({ ...assignData, designation: e.target.value })
-            }
-            placeholder={editingApp?.designation || "e.g., Software Engineer"}
-            className="border p-2 w-full rounded"
-          />
-        </div>
-
-        {/* Candidate Department */}
-        <div>
-          <label className="block mb-1 font-medium">Department</label>
-          <input
-            type="text"
-            value={assignData.department}
-            onChange={(e) =>
-              setAssignData({ ...assignData, department: e.target.value })
-            }
-            placeholder={editingApp?.department || "e.g., Engineering"}
-            className="border p-2 w-full rounded"
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Reporting Manager Name</label>
-          <input
-            type="text"
-            value={assignData.mentorName}
-            onChange={(e) =>
-              setAssignData({ ...assignData, mentorName: e.target.value })
-            }
-            className="border p-2 w-full rounded"
-          />
-        </div>
-
-        {/* Mentor Designation */}
-        <div>
-          <label className="block mb-1 font-medium">Reporting Manager Designation</label>
-          <input
-            type="text"
-            value={assignData.mentorDesignation}
-            onChange={(e) =>
-              setAssignData({ ...assignData, mentorDesignation: e.target.value })
-            }
-            className="border p-2 w-full rounded"
-          />
+          {/* Manager Designation */}
+          <div>
+            <label className="block mb-1.5 text-[11px] font-black uppercase text-zinc-500 tracking-wider">Manager Role</label>
+            <input
+              type="text"
+              value={assignData.mentorDesignation}
+              onChange={(e) => setAssignData({ ...assignData, mentorDesignation: e.target.value })}
+              placeholder="Designation"
+              className="w-full px-4 py-2.5 bg-white border border-zinc-300 rounded-xl text-sm font-bold text-zinc-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Buttons */}
-      <div className="flex justify-end gap-2 mt-6">
+      {/* Footer / Buttons */}
+      <div className="px-6 py-4 border-t border-zinc-100 bg-zinc-50 flex justify-end gap-3 shrink-0">
         <button
           onClick={() => setShowAssignPopup(false)}
-          className="px-3 py-1 bg-gray-400 rounded"
+          className="px-5 py-2.5 bg-white border border-zinc-300 text-zinc-700 font-bold rounded-xl hover:bg-zinc-100 transition-all shadow-sm"
         >
           Cancel
         </button>
 
         <button
           onClick={handleAssignSubmit}
-          disabled={
-            !assignData.companyName ||
-            !assignData.jobType ||
-            !assignData.mentorName ||
-            !assignData.mentorDesignation
-          }
-          className={`px-6 py-2 rounded text-white font-bold transition-all shadow-md ${
-            !assignData.companyName ||
-            !assignData.jobType ||
-            !assignData.mentorName ||
-            !assignData.mentorDesignation
-              ? "bg-gray-400 cursor-not-allowed"
+          disabled={!assignData.companyName || !assignData.jobType || !assignData.mentorName || !assignData.mentorDesignation}
+          className={`px-8 py-2.5 rounded-xl font-black transition-all shadow-md active:scale-95 flex items-center gap-2 ${
+            !assignData.companyName || !assignData.jobType || !assignData.mentorName || !assignData.mentorDesignation
+              ? "bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none"
               : editingApp.approved 
-                ? "bg-zinc-800 hover:bg-black" 
-                : "bg-blue-600 hover:bg-blue-700"
+                ? "bg-zinc-800 text-white hover:bg-black" 
+                : "bg-blue-600 text-white hover:bg-blue-700"
           }`}
         >
-          {editingApp.approved ? "Update Record" : "Approve & Enroll"}
+          {editingApp.approved ? "UPDATE RECORD" : (
+            <><span>⚡</span> APPROVE & ENROLL</>
+          )}
         </button>
       </div>
+
     </div>
   </div>
 )}
@@ -1012,7 +975,7 @@ const Leads: React.FC = () => {
                     });
                     const url = window.URL.createObjectURL(new Blob([res.data], { type: res.data.type || res.headers['content-type'] }));
                     window.open(url, '_blank');
-                  } catch (err) {
+                  } catch {
                     alert("Failed to view file.");
                   }
                 }}

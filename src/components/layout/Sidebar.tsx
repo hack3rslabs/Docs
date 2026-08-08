@@ -69,7 +69,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       {/* Sidebar Container */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full bg-[#09090b] text-white z-[70] w-64 transform transition-all duration-300 ease-in-out md:translate-x-0 border-r border-zinc-800 shadow-2xl",
+          "fixed top-0 left-0 h-full bg-[#09090b] text-white z-[70] w-64 transform transition-all duration-300 ease-in-out border-r border-zinc-800 shadow-2xl",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -82,21 +82,21 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
               </div>
               <span className="text-sm font-black tracking-tighter uppercase">Techwell</span>
             </div>
-            <Button variant="ghost" size="icon" className="md:hidden text-zinc-400 hover:text-white" onClick={onToggle}>
+            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white" onClick={onToggle}>
               <X className="w-5 h-5" />
             </Button>
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 p-4 space-y-1.5 mt-2">
-            <p className="px-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Main Menu</p>
+          <nav className="flex-1 p-6 space-y-3 mt-4">
+            <p className="px-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-6">Main Menu</p>
             {menuItems.map((item) => {
               const isActive = pathname === item.href;
               return (
-                <Link key={item.href} href={item.href} onClick={onToggle}>
+                <Link key={item.href} href={item.href} onClick={() => { if (window.innerWidth < 768) onToggle(); }}>
                   <div
                     className={cn(
-                      "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-bold transition-all group",
+                      "flex items-center gap-4 px-5 py-3 rounded-xl text-sm font-bold transition-all group",
                       isActive 
                         ? "bg-white text-black shadow-lg shadow-white/5" 
                         : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100"

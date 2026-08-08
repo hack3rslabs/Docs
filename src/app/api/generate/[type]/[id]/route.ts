@@ -20,13 +20,31 @@ export async function POST(
     const body = await request.json().catch(() => ({}));
     const { manualCtc } = body;
     
-    const app = await prisma.application.findUnique({
-      where: { id },
-      include: { lead: true }
-    });
+    let app = null;
+    let specificHikeLetter = null;
+
+    if (type === 'hike-letter') {
+      specificHikeLetter = await prisma.hikeLetter.findUnique({ where: { id } });
+      if (specificHikeLetter) {
+        app = await prisma.application.findUnique({
+          where: { id: specificHikeLetter.applicationId },
+          include: { lead: true }
+        });
+      }
+    }
+    
+    if (!app) {
+      app = await prisma.application.findUnique({
+        where: { id },
+        include: { lead: true }
+      });
+    }
 
     if (!app) {
       return NextResponse.json({ success: false, message: 'Application not found' }, { status: 404 });
+    }
+    if (auth.companyId && app.companyId && app.companyId !== auth.companyId) {
+      return unauthorizedResponse();
     }
 
     // Decrypt sensitive fields for PDF content
@@ -44,13 +62,13 @@ export async function POST(
       }
     }
 
-    const settings = await prisma.setting.findFirst({
+    const settings = await prisma.company.findFirst({
       where: {
         companyName: {
           contains: app.companyName || '',
         }
       }
-    }) || await prisma.setting.findFirst();
+    }) || await prisma.company.findFirst();
 
     if (!settings) {
       return NextResponse.json({ success: false, message: 'Company settings not found' }, { status: 404 });
@@ -71,7 +89,7 @@ export async function POST(
           console.error('PDFKit Error:', err);
           reject(err);
         });
-        generatePDFContent(doc, type, app, settings);
+        generatePDFContent(doc, type, app, settings, specificHikeLetter);
         doc.end();
       } catch (e) {
         console.error('Sync PDF Error:', e);
@@ -92,7 +110,7 @@ export async function POST(
   }
 }
 
-function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, settings: any) {
+function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, settings: any, specificHikeLetter?: any) {
   const pageWidth = doc.page.width;
   const pageHeight = doc.page.height;
 
@@ -134,7 +152,10 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
   const addFooter = () => {
     const footerY = pageHeight - 80;
     doc.fontSize(8).font(fontRegular).fillColor('#6b7280');
-    doc.text(settings.address || '', 50, footerY, { align: 'center', width: pageWidth - 100 });
+    
+    // Replace newlines with commas to prevent overlapping on multiple lines
+    const singleLineAddress = (settings.address || '').replace(/\r?\n/g, ', ');
+    doc.text(singleLineAddress, 50, footerY, { align: 'center', width: pageWidth - 100 });
     
     const contactInfo = [settings.phone, settings.email, settings.webAddress, settings.companyName].filter(Boolean).join(' | ');
     doc.text(contactInfo, 50, footerY + 12, { align: 'center', width: pageWidth - 100 });
@@ -248,7 +269,11 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     doc.fontSize(10).font(fontRegular).text(`Date: ${formatDate(date)}`, 50);
     
     const prefix = settings.companyName?.substring(0, 3).toUpperCase() || 'TEC';
-    const refYear = new Date().getFullYear();
+    let refYear = new Date().getFullYear();
+    if (date && date !== 'null') {
+      const d = new Date(date);
+      if (!isNaN(d.getTime())) refYear = d.getFullYear();
+    }
     const refId = showOfferNo 
       ? `CMPJO/${offerNumber.replace('TW-', '')}` 
       : `HR/${app.empId || app.id.substring(0, 6).toUpperCase()}`;
@@ -457,7 +482,14 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     addFooter();
 
   } else if (type === 'hike-letter') {
-    addLetterHeader('SALARY INCREMENT LETTER', app.hikeIssueDate);
+    const hikeIssueDate = specificHikeLetter ? specificHikeLetter.hikeIssueDate : app.hikeIssueDate;
+    const hikeDate = specificHikeLetter ? specificHikeLetter.hikeDate : app.hikeDate;
+    const currentCtc = specificHikeLetter ? specificHikeLetter.previousCtc : parseFloat(app.ctc?.toString().replace(/,/g, '') || '0');
+    const hikeAmt = specificHikeLetter ? specificHikeLetter.hikeAmount : parseFloat(app.hikeAmount?.toString().replace(/,/g, '') || '0');
+    const revisedCtc = specificHikeLetter ? specificHikeLetter.newCtc : (currentCtc + hikeAmt);
+    const incrementPercent = currentCtc > 0 ? ((hikeAmt / currentCtc) * 100).toFixed(2) : '0';
+
+    addLetterHeader('SALARY INCREMENT LETTER', hikeIssueDate);
     doc.font(fontBold).fontSize(11).text('To,');
     doc.text(app.name);
     doc.text(`Emp ID: ${app.empId || 'N/A'}`);
@@ -469,7 +501,7 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     let yearsOfService = "—";
     if (app.joiningDate) {
       const join = new Date(app.joiningDate);
-      const issue = app.hikeIssueDate ? new Date(app.hikeIssueDate) : new Date();
+      const issue = hikeIssueDate ? new Date(hikeIssueDate) : new Date();
       if (!isNaN(join.getTime())) {
         const years = ( (issue.getTime() - join.getTime()) / (1000 * 60 * 60 * 24 * 365.25)).toFixed(1);
         yearsOfService = `${years} Year(s)`;
@@ -481,15 +513,11 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     doc.moveDown();
     doc.fontSize(11).font(fontRegular).text(`Dear ${app.name},`);
     doc.moveDown();
-    doc.text(`We are pleased to inform you that, following your performance review and in recognition of your dedicated service of ${yearsOfService} with ${settings.companyName}, the management has approved an increment in your salary effective from ${app.hikeDate || 'the next payroll cycle'}.`, { align: 'justify', lineGap: 3 });
+    doc.text(`We are pleased to inform you that, following your performance review and in recognition of your dedicated service of ${yearsOfService} with ${settings.companyName}, the management has approved an increment in your salary effective from ${hikeDate || 'the next payroll cycle'}.`, { align: 'justify', lineGap: 3 });
     doc.moveDown();
-    const currentCtc = parseFloat(app.ctc?.toString().replace(/,/g, '') || '0');
-    const hikeAmt = parseFloat(app.hikeAmount?.toString().replace(/,/g, '') || '0');
-    const revisedCtc = currentCtc + hikeAmt;
-    const incrementPercent = currentCtc > 0 ? ((hikeAmt / currentCtc) * 100).toFixed(2) : '0';
     doc.font(fontBold).text('Revised Compensation Details:');
     doc.font(fontRegular);
-    doc.list([`Current Annual CTC: INR ${currentCtc.toLocaleString('en-IN')}`, `Increment Amount: INR ${hikeAmt.toLocaleString('en-IN')}`, `Revised Annual CTC: INR ${revisedCtc.toLocaleString('en-IN')}`, `Increment Percentage: ${incrementPercent}%`, `Effective Date: ${app.hikeDate || 'Next Payroll Cycle'}`], { bulletRadius: 2, textIndent: 20 });
+    doc.list([`Previous Annual CTC: INR ${currentCtc.toLocaleString('en-IN')}`, `Increment Amount: INR ${hikeAmt.toLocaleString('en-IN')}`, `Revised Annual CTC: INR ${revisedCtc.toLocaleString('en-IN')}`, `Increment Percentage: ${incrementPercent}%`, `Effective Date: ${hikeDate || 'Next Payroll Cycle'}`], { bulletRadius: 2, textIndent: 20 });
     doc.moveDown();
     doc.text('We appreciate your hard work and contribution toward the growth of the organization. We look forward to your continued commitment and excellence.', { align: 'justify', lineGap: 2 });
     doc.moveDown(2);
@@ -502,11 +530,18 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     addLogo();
     doc.moveDown(2);
     doc.fontSize(14).font(fontBold).text('SALARY PAYSLIP', { align: 'center' });
-    doc.fontSize(10).font(fontRegular).text(`Month: ${app.payslipDate || 'N/A'}`, { align: 'center' });
+    let formattedPayslipMonth = app.payslipDate || 'N/A';
+    if (app.payslipDate && app.payslipDate !== 'null') {
+      const d = new Date(app.payslipDate);
+      if (!isNaN(d.getTime())) {
+        formattedPayslipMonth = d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+      }
+    }
+    doc.fontSize(10).font(fontRegular).text(`Month: ${formattedPayslipMonth}`, { align: 'center' });
     doc.moveDown();
     
     // Employee Info Box
-    doc.rect(50, doc.y, 500, 95).fill('#f8fafc').stroke('#e2e8f0');
+    doc.rect(50, doc.y, 500, 110).fill('#f8fafc').stroke('#e2e8f0');
     doc.fill('#000');
     const tableTop = doc.y + 12;
     doc.fontSize(9);
@@ -527,8 +562,21 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     doc.font(fontRegular).text(app.pan || 'N/A', 405, tableTop + 36);
     doc.font(fontBold).text('UAN / ESI:', 310, tableTop + 54);
     doc.font(fontRegular).text(`${app.uan || 'N/A'} / ${app.esi || 'N/A'}`, 405, tableTop + 54);
+
+    let daysInMonth = 30;
+    if (app.payslipDate && app.payslipDate !== 'null') {
+      const d = new Date(app.payslipDate);
+      if (!isNaN(d.getTime())) {
+        daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      }
+    }
+    const workingDays = app.workingDays || daysInMonth;
+    const prorationRatio = Math.min(workingDays / daysInMonth, 1);
     
-    doc.moveDown(7.5);
+    doc.font(fontBold).text('Paid Days:', 65, tableTop + 72);
+    doc.font(fontRegular).text(`${workingDays} / ${daysInMonth}`, 160, tableTop + 72);
+    
+    doc.moveDown(8.5);
     const tableYStart = doc.y;
     const colWidth = 250;
     
@@ -543,8 +591,19 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     doc.font(fontRegular).fontSize(9).fill('#000');
     let rowY = tableYStart + 24;
     const rowHeight = 22;
-    const earnings = [['Basic Salary', app.basic], ['HRA', app.houseRentAllowance], ['Statutory Bonus', app.statutoryBonus], ['Special Allowance', app.specialAllowance]];
-    const deductions = [['Employee PF', app.providentFund], ['Employee ESI', app.employeeEsi], ['Professional Tax', app.professionalTax], ['Income Tax (TDS)', app.tds]];
+    const getProrated = (val: any) => val ? val * prorationRatio : 0;
+    
+    const pBasic = getProrated(app.basic);
+    const pHra = getProrated(app.houseRentAllowance);
+    const pStatutoryBonus = getProrated(app.statutoryBonus);
+    const pSpecialAllowance = getProrated(app.specialAllowance);
+    const pPf = getProrated(app.providentFund);
+    const pEsi = getProrated(app.employeeEsi);
+    const pProfTax = getProrated(app.professionalTax);
+    const pTds = getProrated(app.tds);
+
+    const earnings = [['Basic Salary', pBasic], ['HRA', pHra], ['Statutory Bonus', pStatutoryBonus], ['Special Allowance', pSpecialAllowance]];
+    const deductions = [['Employee PF', pPf], ['Employee ESI', pEsi], ['Professional Tax', pProfTax], ['Income Tax (TDS)', pTds]];
     
     for (let i = 0; i < 4; i++) {
       if (i % 2 === 1) {
@@ -559,15 +618,18 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
       rowY += rowHeight;
     }
     
+    const grossSalary = pBasic + pHra + pStatutoryBonus + pSpecialAllowance;
+    const totalDeduction = pPf + pEsi + pProfTax + pTds;
+
     // Totals Row
     doc.rect(50, rowY, colWidth, rowHeight).fill('#f1f5f9').stroke('#cbd5e1');
     doc.rect(50 + colWidth, rowY, colWidth, rowHeight).fill('#f1f5f9').stroke('#cbd5e1');
     doc.fill('#0f172a').font(fontBold);
-    doc.text('GROSS SALARY', 65, rowY + 7); doc.text(Math.round(app.grossSalary || 0).toLocaleString('en-IN'), 210, rowY + 7);
-    doc.text('TOTAL DEDUCTIONS', 320, rowY + 7); doc.text(Math.round(app.totalDeduction || 0).toLocaleString('en-IN'), 465, rowY + 7);
+    doc.text('GROSS SALARY', 65, rowY + 7); doc.text(Math.round(grossSalary).toLocaleString('en-IN'), 210, rowY + 7);
+    doc.text('TOTAL DEDUCTIONS', 320, rowY + 7); doc.text(Math.round(totalDeduction).toLocaleString('en-IN'), 465, rowY + 7);
     
     rowY += rowHeight + 15;
-    const netTakeHome = Math.round(app.netTakeHome || 0);
+    const netTakeHome = Math.round(grossSalary - totalDeduction);
     
     // Net Take Home Box
     doc.rect(50, rowY, 500, 55).fill('#0f172a').stroke('#000');

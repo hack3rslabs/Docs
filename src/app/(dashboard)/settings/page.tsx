@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -39,7 +40,7 @@ const Settings = () => {
   const [stamp, setStamp] = useState<File | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  
 
   // Change Password State
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
@@ -65,7 +66,7 @@ const Settings = () => {
       console.error(err);
       setCompanies([]);
     } finally {
-      setLoading(false);
+      
     }
   };
 
@@ -235,7 +236,15 @@ const Settings = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input label="Company Name" name="companyName" value={formData.companyName} onChange={handleChange} placeholder="e.g. Techwell Solutions" />
+                <Input 
+                  label="Company Name" 
+                  name="companyName" 
+                  value={formData.companyName} 
+                  onChange={handleChange} 
+                  placeholder="e.g. Techwell Solutions" 
+                  readOnly={!!selectedCompanyId} 
+                  className={!!selectedCompanyId ? "w-full bg-zinc-200 border border-zinc-300 rounded-xl px-4 py-2.5 text-sm font-bold text-zinc-500 cursor-not-allowed" : ""} 
+                />
                 <Select label="Logo Alignment" name="logoAlignment" value={formData.logoAlignment} onChange={handleChange} options={["left", "center", "right"]} />
                 
                 <FileInput label="Company Logo" onChange={(e) => handleFileChange(e, "logo")} preview={companyLogo} />

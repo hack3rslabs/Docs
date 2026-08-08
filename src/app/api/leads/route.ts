@@ -10,6 +10,7 @@ export async function GET(request: Request) {
     if (!auth) return unauthorizedResponse();
 
     const leads = await prisma.lead.findMany({
+      where: auth.companyId ? { companyId: auth.companyId } : {},
       orderBy: { createdAt: 'desc' },
     });
     // Map id to _id for frontend compatibility

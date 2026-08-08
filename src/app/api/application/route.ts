@@ -12,6 +12,7 @@ export async function GET(request: Request) {
     if (!auth) return unauthorizedResponse();
 
     const applications = await prisma.application.findMany({
+      where: auth.companyId ? { companyId: auth.companyId } : {},
       include: { lead: true },
       orderBy: { createdAt: 'desc' },
     });

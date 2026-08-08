@@ -27,6 +27,7 @@ export async function POST(request: Request) {
 
     const admin = await prisma.admin.findUnique({
       where: { email: normalizedEmail },
+      include: { company: true }
     });
 
     if (!admin) {
@@ -49,13 +50,33 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check Company Subscription Status
+    if (admin.company) {
+      if (!admin.company.subscriptionActive) {
+        return NextResponse.json(
+          { success: false, message: 'Your company account is inactive. Please contact support.' },
+          { status: 403 }
+        );
+      }
+      
+      if (admin.company.subscriptionEnd) {
+        const now = new Date();
+        if (new Date(admin.company.subscriptionEnd) < now) {
+          return NextResponse.json(
+            { success: false, message: 'Your company yearly subscription has expired. Please renew.' },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     if (!SECRET) {
       console.error('🔥 JWT_SECRET is missing during sign phase!');
       return NextResponse.json({ success: false, message: 'Server configuration error' }, { status: 500 });
     }
 
     console.log('🎟️ Generating token...');
-    const token = jwt.sign({ id: admin.id, email: admin.email }, SECRET, {
+    const token = jwt.sign({ id: admin.id, email: admin.email, companyId: admin.companyId }, SECRET, {
       expiresIn: '1d',
     });
 

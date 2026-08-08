@@ -50,13 +50,19 @@ export async function POST(request: Request) {
     }
 
     if (id) {
-      const updated = await prisma.setting.update({
+      const updated = await prisma.company.update({
         where: { id },
         data,
       });
       return NextResponse.json({ success: true, message: 'Settings updated', data: updated });
     } else {
-      const created = await prisma.setting.create({
+      // Set 1-year default subscription for newly created companies via UI
+      const oneYearFromNow = new Date();
+      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+      
+      data.subscriptionEnd = oneYearFromNow;
+
+      const created = await prisma.company.create({
         data,
       });
       return NextResponse.json({ success: true, message: 'Settings created', data: created });

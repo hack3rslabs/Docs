@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { Card } from "@/components/ui/card";
 import welcomeHero from "@/assets/welcome-hero.png";
 
@@ -9,7 +10,7 @@ const WelcomeCard = () => {
           <div className="mb-2">
             <span className="text-muted-foreground text-sm">Welcome Back</span>
           </div>
-          <h1 className="text-2xl font-bold text-primary mb-4">Utham</h1>
+          <h1 className="text-2xl font-bold text-primary mb-4">Uttam</h1>
           <p className="text-zinc-500 text-xs font-bold leading-relaxed max-w-md uppercase tracking-tight">
             Manage your Training Center operations, track leads, and generate 
             MNC-compliant corporate documentation with our automated payroll 

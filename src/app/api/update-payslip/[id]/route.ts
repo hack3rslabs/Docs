@@ -17,7 +17,7 @@ export async function PATCH(
       where: { id },
       data: { 
         payslipDate, 
-        workingDays: workingDays.toString() 
+        workingDays: workingDays ? parseInt(workingDays) : null
       },
     });
 

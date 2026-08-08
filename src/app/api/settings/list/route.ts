@@ -7,7 +7,8 @@ export async function GET(request: Request) {
     const auth = await verifyAuth(request);
     if (!auth) return unauthorizedResponse();
 
-    const settings = await prisma.setting.findMany();
+    const where = auth.companyId ? { id: auth.companyId } : {};
+    const settings = await prisma.company.findMany({ where });
     // Return in a format the frontend expects (it tries many keys)
     return NextResponse.json(settings);
   } catch (err) {
