@@ -60,7 +60,9 @@ export async function PUT(
     if (body.ctc) {
       const annualCtc = parseFloat(body.ctc.toString().replace(/,/g, ''));
       if (!isNaN(annualCtc)) {
-        salaryData = calculateSalary(annualCtc);
+        const pfStatus = body.pfStatus !== undefined ? body.pfStatus : existingApp.pfStatus;
+        const optInEpf = pfStatus?.toString().toLowerCase().trim() !== 'no';
+        salaryData = calculateSalary(annualCtc, optInEpf);
       }
     }
 
@@ -88,7 +90,7 @@ export async function PUT(
       'dateDocument', 'empId', 'bankName', 'accountNumber', 'ifsc', 
       'branchName', 'bankPassbook', 'uan', 'esi', 'pfFile', 'offerDate', 
       'appointmentDate', 'experienceDate', 'internshipDate', 'nocDate', 
-      'payslipDate', 'hikeDate', 'referenceFile', 'hikeAmount', 'hikeIssueDate'
+      'payslipDate', 'hikeDate', 'referenceFile', 'hikeAmount', 'hikeIssueDate', 'pfStatus'
     ];
 
     stringFields.forEach(field => {
@@ -135,6 +137,36 @@ export async function PUT(
     // 5. Handle Boolean approved
     if (body.approved !== undefined) {
       finalUpdateData.approved = (body.approved === 'true' || body.approved === true);
+      
+      // Auto-generate Employee ID if approving and empId is missing
+      if (finalUpdateData.approved && !existingApp.empId && !finalUpdateData.empId) {
+        const jType = (finalUpdateData.jobType || existingApp.jobType || '').toLowerCase();
+        let prefix = 'EMP';
+        if (jType.includes('full time') || jType.includes('full-time')) prefix = 'FT';
+        else if (jType.includes('part time') || jType.includes('part-time')) prefix = 'PT';
+        else if (jType.includes('intern')) prefix = 'INT';
+        else if (jType.includes('contract')) prefix = 'CT';
+
+        const existingAppsWithPrefix = await prisma.application.findMany({
+          where: { empId: { startsWith: `${prefix}-` } },
+          select: { empId: true }
+        });
+        
+        let maxNum = 1000;
+        existingAppsWithPrefix.forEach(app => {
+          if (app.empId) {
+            const parts = app.empId.split('-');
+            if (parts.length === 2) {
+              const num = parseInt(parts[1], 10);
+              if (!isNaN(num) && num > maxNum) {
+                maxNum = num;
+              }
+            }
+          }
+        });
+        
+        finalUpdateData.empId = `${prefix}-${maxNum + 1}`;
+      }
     }
 
     try {

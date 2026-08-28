@@ -76,8 +76,8 @@ export async function POST(request: Request) {
         });
 
         // Basic Validation
-        const email = emp.email?.toString().trim();
-        const phone = emp.phone?.toString().trim();
+        const email = emp.email?.toString().toLowerCase().trim();
+        const phone = emp.phone?.toString().replace(/\D/g, '');
         const name = emp.name?.toString().trim();
 
         if (!email || !phone || !name) {
@@ -103,21 +103,33 @@ export async function POST(request: Request) {
           const monthly = parseFloat(emp.monthlySalary.toString().replace(/,/g, ''));
           if (!isNaN(monthly)) {
             const annual = monthly * 12;
-            salaryData = calculateSalary(annual);
+            const optInEpf = emp.pfStatus?.toString().toLowerCase().trim() !== 'no';
+            salaryData = calculateSalary(annual, optInEpf);
           }
         }
 
-        // Create Lead
-        const lead = await prisma.lead.create({
-          data: {
-            name,
-            email,
-            phone,
-            applicationSubmitted: true,
-            paymentAmount: 15000,
-            paymentStatus: emp.paymentStatus?.toString().toLowerCase().includes('paid') ? 'Paid' : 'Pending'
-          }
+        // Find or Create Lead
+        let lead = await prisma.lead.findFirst({
+          where: { OR: [{ email }, { phone }] }
         });
+
+        if (!lead) {
+          lead = await prisma.lead.create({
+            data: {
+              name,
+              email,
+              phone,
+              applicationSubmitted: true,
+              paymentAmount: 15000,
+              paymentStatus: emp.paymentStatus?.toString().toLowerCase().includes('paid') ? 'Paid' : 'Pending'
+            }
+          });
+        } else {
+          await prisma.lead.update({
+            where: { id: lead.id },
+            data: { applicationSubmitted: true }
+          });
+        }
 
         // Create Application
         await prisma.application.create({

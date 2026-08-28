@@ -47,7 +47,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <div 
         className={cn(
           "flex-1 flex flex-col min-h-screen transition-all duration-300 w-full",
-          sidebarOpen ? "md:ml-64" : "ml-0"
+          sidebarOpen ? "md:ml-56" : "ml-0"
         )}
       >
 

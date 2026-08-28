@@ -69,7 +69,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       {/* Sidebar Container */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full bg-[#09090b] text-white z-[70] w-64 transform transition-all duration-300 ease-in-out border-r border-zinc-800 shadow-2xl",
+          "fixed top-0 left-0 h-full bg-[#09090b] text-white z-[70] w-56 transform transition-all duration-300 ease-in-out border-r border-zinc-800 shadow-2xl",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

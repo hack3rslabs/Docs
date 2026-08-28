@@ -17,7 +17,7 @@ export interface SalaryBreakdown {
   annualCtc: number;
 }
 
-export function calculateSalary(annualCtc: number): SalaryBreakdown {
+export function calculateSalary(annualCtc: number, optInEpf: boolean = true): SalaryBreakdown {
   const monthlyCtc = Math.round(annualCtc / 12);
   
   // 1. Basic Salary: Mandated at 50% of CTC under New Wage Code
@@ -30,9 +30,9 @@ export function calculateSalary(annualCtc: number): SalaryBreakdown {
   const statutoryBonus = Math.round(basic * 0.0833);
 
   // 4. Employer Contributions (Part of CTC)
-  // EPF: 12% of Basic, capped at 15000 wage ceiling
-  const epfWage = Math.min(basic, 15000);
-  const employerPf = Math.round(epfWage * 0.12);
+  // EPF: 12% of Basic, capped at 15000 wage ceiling if opted in
+  const epfWage = optInEpf ? Math.min(basic, 15000) : 0;
+  const employerPf = optInEpf ? Math.round(epfWage * 0.12) : 0;
   
   // ESI: 3.25% of Gross, only if Gross <= 21000
   // Gross = MonthlyCtc - EmployerPF - EmployerESI

@@ -216,7 +216,7 @@ const ApplicationFormContent = () => {
           <section className="border p-4 rounded bg-gray-50">
             <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label>
                 <span className="text-sm">Father’s Name</span>
                 <input
@@ -339,7 +339,7 @@ const ApplicationFormContent = () => {
           <section className="border p-4 rounded bg-gray-50">
             <h3 className="text-lg font-semibold mb-4">Professional Information</h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label>
                 <span className="text-sm">Designation</span>
                 <input
@@ -393,7 +393,7 @@ const ApplicationFormContent = () => {
           <section className="border p-4 rounded bg-gray-50">
             <h3 className="text-lg font-semibold mb-4">Beneficiary Information</h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label>
                 <span className="text-sm">Bank Name</span>
                 <input

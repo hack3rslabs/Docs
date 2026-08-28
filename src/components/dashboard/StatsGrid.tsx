@@ -30,37 +30,6 @@ const StatCard = ({ title, value, percentage, color }: StatCardProps) => {
           <div className="text-3xl font-black text-zinc-900 mb-1">{value}</div>
           <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{title}</div>
         </div>
-        <div className="relative">
-          <div className="relative w-14 h-14">
-            <svg className="w-14 h-14 transform -rotate-90" viewBox="0 0 80 80">
-              <circle
-                cx="40"
-                cy="40"
-                r={radius}
-                stroke="currentColor"
-                strokeWidth="8"
-                fill="none"
-                className="text-zinc-100"
-              />
-              <circle
-                cx="40"
-                cy="40"
-                r={radius}
-                stroke="currentColor"
-                strokeWidth="8"
-                fill="none"
-                strokeLinecap="round"
-                strokeDasharray={strokeDasharray}
-                className={colorClasses[color]}
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className={`text-[10px] font-black ${colorClasses[color]}`}>
-                {percentage}%
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     </Card>
   );
@@ -84,9 +53,9 @@ const StatsGrid = () => {
 
   const displayStats = [
     { title: "Total Leads", value: stats?.totalLeads || 0, percentage: 100, color: 'purple' as const },
-    { title: "Enrolled", value: stats?.totalEmployees || 0, percentage: stats?.conversionRate || 0, color: 'teal' as const },
-    { title: "Total Worth (INR)", value: `₹${(stats?.totalWorth || 0).toLocaleString('en-IN')}`, percentage: 100, color: 'blue' as const },
-    { title: "Target Progress", value: `${stats?.conversionRate || 0}%`, percentage: stats?.conversionRate || 0, color: 'coral' as const },
+    { title: "Verified Leads", value: stats?.totalEmployees || 0, percentage: stats?.conversionRate || 0, color: 'teal' as const },
+    { title: "Pending Leads", value: stats?.pendingToVerify || 0, percentage: 100, color: 'coral' as const },
+    { title: "Total Revenue", value: `₹${(stats?.totalWorth || 0).toLocaleString('en-IN')}`, percentage: 100, color: 'blue' as const },
   ];
 
   return (

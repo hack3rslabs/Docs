@@ -53,10 +53,12 @@ export async function POST(request: Request) {
     // Salary Calculation if CTC is provided
     let salaryData = {};
     const ctcValue = formData.get('ctc') as string;
+    const pfStatus = formData.get('pfStatus') as string;
     if (ctcValue) {
       const annualCtc = parseFloat(ctcValue.replace(/,/g, ''));
       if (!isNaN(annualCtc)) {
-        salaryData = calculateSalary(annualCtc);
+        const optInEpf = pfStatus?.toLowerCase().trim() !== 'no';
+        salaryData = calculateSalary(annualCtc, optInEpf);
       }
     }
 
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
       branchName: formData.get('branchName') as string,
       uan: formData.get('uan') as string,
       esi: formData.get('esi') as string,
+      pfStatus: pfStatus,
       referenceFile: formData.get('referenceFile') as string,
       ...salaryData,
     };

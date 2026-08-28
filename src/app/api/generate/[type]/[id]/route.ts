@@ -197,10 +197,8 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     
     doc.font(fontBold).text('Offer No:', iRX, infoBoxY + 8);
     doc.font(fontRegular).text(offerNumber, iRX + 90, infoBoxY + 8);
-    doc.font(fontBold).text('Employee ID:', iRX, infoBoxY + 24);
-    doc.font(fontRegular).text(app.empId || 'N/A', iRX + 90, infoBoxY + 24);
-    doc.font(fontBold).text('Annual CTC:', iRX, infoBoxY + 40);
-    doc.font(fontRegular).text(`INR ${app.ctc || '—'}`, iRX + 90, infoBoxY + 40);
+    doc.font(fontBold).text('Annual CTC:', iRX, infoBoxY + 24);
+    doc.font(fontRegular).text(`INR ${app.ctc || '—'}`, iRX + 90, infoBoxY + 24);
     doc.moveDown(4.5);
 
     const col1 = 50, col2 = 300, col3 = 450;
@@ -330,7 +328,7 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     doc.text(`Emp ID: ${app.empId || 'N/A'}`);
     doc.moveDown(2);
 
-    doc.fontSize(12).font(fontBold).text(`Subject: Relieving Letter & Acceptance of Resignation`, { underline: true });
+    doc.fontSize(11).font(fontBold).text(`Subject: Relieving Letter & Acceptance of Resignation`, { underline: true });
     doc.moveDown();
 
     doc.fontSize(11).font(fontRegular).text(`Dear ${app.name},`);
@@ -380,11 +378,10 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     addLetterHeader(title, app.offerDate, true /* show offer number */);
     doc.font(fontBold).fontSize(11).text('To,');
     doc.text(app.name);
-    doc.text(`Emp ID: ${app.empId || 'N/A'}`);
     doc.font(fontRegular).text(app.address || '');
     doc.text(`Contact: ${app.phone}`);
     doc.moveDown(2);
-    doc.fontSize(12).font(fontBold).text(`Subject: ${title} FOR THE POSITION OF ${(app.designation || 'PROFESSIONAL').toUpperCase()}`, { align: 'center', underline: true });
+    doc.fontSize(11).font(fontBold).text(`Subject: ${title} FOR THE POSITION OF ${(app.designation || 'PROFESSIONAL').toUpperCase()}`, { underline: true });
     doc.moveDown(2);
     doc.fontSize(11).font(fontRegular).text(`Dear ${app.name},`);
     doc.moveDown();
@@ -419,7 +416,7 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     doc.font(fontRegular).text(app.address || '');
     doc.text(`Contact: ${app.phone}`);
     doc.moveDown(2);
-    doc.fontSize(12).font(fontBold).text(`Subject: FORMAL APPOINTMENT AS ${app.designation?.toUpperCase() || 'PROFESSIONAL'}`, { align: 'center', underline: true });
+    doc.fontSize(11).font(fontBold).text(`Subject: FORMAL APPOINTMENT AS ${app.designation?.toUpperCase() || 'PROFESSIONAL'}`, { underline: true });
     doc.moveDown(2);
     doc.fontSize(11).font(fontRegular).text(`Dear ${app.name},`);
     doc.moveDown();
@@ -509,7 +506,7 @@ function generatePDFContent(doc: PDFKit.PDFDocument, type: string, app: any, set
     }
     doc.font(fontBold).text('Tenure:', 50); doc.font(fontRegular).text(yearsOfService, 150, doc.y - 10);
     doc.moveDown(2);
-    doc.fontSize(12).font(fontBold).text('Subject: Notification of Salary Increment', { underline: true });
+    doc.fontSize(11).font(fontBold).text('Subject: Notification of Salary Increment', { underline: true });
     doc.moveDown();
     doc.fontSize(11).font(fontRegular).text(`Dear ${app.name},`);
     doc.moveDown();

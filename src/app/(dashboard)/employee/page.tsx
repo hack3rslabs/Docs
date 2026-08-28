@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useState } from "react";
+import * as XLSX from 'xlsx';
 import {
   Dialog,
   DialogContent,
@@ -176,6 +177,35 @@ const Employee = () => {
     } catch {
       alert("Failed to download template.");
     }
+  };
+
+  // ======================================================
+  // EXPORT TO EXCEL
+  // ======================================================
+  const handleExport = () => {
+    if (!applications || applications.length === 0) {
+      alert("No data to export.");
+      return;
+    }
+    
+    // Create a simplified version of applications for export
+    const exportData = applications.map(app => ({
+      'Employee ID': app.empId || '',
+      'Name': app.name || '',
+      'Email': app.email || '',
+      'Phone': app.phone || '',
+      'Company': app.companyName || '',
+      'Job Type': app.jobType || '',
+      'Department': app.department || '',
+      'Designation': (app as any).designation || '',
+      'PAN': app.pan || '',
+      'UAN': app.uan || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Employees");
+    XLSX.writeFile(wb, "Employees_Export.xlsx");
   };
 
   // ======================================================
@@ -366,23 +396,47 @@ const Employee = () => {
   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
     <h2 className="text-xl font-bold">👥 Enrolled Employees</h2>
 
-    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-      {/* -------------------- IMPORT DATA -------------------- */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button variant="default" className="bg-blue-700 hover:bg-blue-800 text-white shadow-md font-bold px-5">
-            📥 Import Employees
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden border-none rounded-2xl shadow-2xl">
-          <div className="bg-blue-700 p-8 text-white">
-            <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Import Wizard</h3>
-            <p className="text-blue-100 text-xs font-bold uppercase tracking-widest opacity-70">Bulk Employee Onboarding</p>
+    <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+      {/* -------------------- SEARCH BAR -------------------- */}
+      <div className="relative w-full sm:w-48 md:w-56 order-3 sm:order-1">
+        <input
+          type="text"
+          placeholder="Search employees..."
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+          className="border border-zinc-200 p-2 pl-9 rounded-lg w-full text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+        />
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+          🔍
+        </span>
+      </div>
+
+      <div className="flex gap-2 w-full sm:w-auto order-1 sm:order-2">
+        {/* -------------------- EXPORT DATA -------------------- */}
+        <Button 
+          variant="outline" 
+          className="flex-1 sm:flex-none border-green-600 text-green-700 hover:bg-green-50 shadow-sm font-bold text-xs h-9 px-3"
+          onClick={handleExport}
+        >
+          📊 Export
+        </Button>
+
+        {/* -------------------- IMPORT DATA -------------------- */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="default" className="flex-1 sm:flex-none bg-blue-700 hover:bg-blue-800 text-white shadow-sm font-bold text-xs h-9 px-3">
+              📥 Import
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[95vw] max-w-[550px] p-0 overflow-hidden border-none rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-blue-700 p-6 sm:p-8 text-white sticky top-0 z-20">
+            <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tighter mb-1 sm:mb-2">Import Wizard</h3>
+            <p className="text-blue-100 text-[10px] sm:text-xs font-bold uppercase tracking-widest opacity-70">Bulk Employee Onboarding</p>
           </div>
 
-          <div className="p-8 space-y-8 bg-white">
+          <div className="p-5 sm:p-8 space-y-6 sm:space-y-8 bg-white">
             {/* Steps Indicator */}
-            <div className="flex items-center justify-between relative px-2">
+            <div className="flex items-center justify-between relative px-2 hidden sm:flex">
               <div className="absolute top-1/2 left-0 w-full h-[2px] bg-zinc-100 -translate-y-1/2 z-0" />
               {[1, 2, 3].map((step) => (
                 <div key={step} className="relative z-10 flex flex-col items-center gap-2">
@@ -437,7 +491,7 @@ const Employee = () => {
                     />
                     <label 
                       htmlFor="excel-upload-wizard"
-                      className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-2xl transition-all cursor-pointer ${
+                      className={`flex flex-col items-center justify-center p-6 sm:p-8 border-2 border-dashed rounded-2xl transition-all cursor-pointer ${
                         importFile ? "bg-green-50 border-green-300" : "bg-zinc-50 border-zinc-200 hover:border-blue-400"
                       }`}
                     >
@@ -477,14 +531,14 @@ const Employee = () => {
             </div>
           </div>
 
-          <div className="p-6 bg-zinc-50 border-t border-zinc-100 flex items-center justify-between">
-            <Button variant="ghost" className="font-bold text-zinc-500 hover:bg-white" onClick={() => { setIsDialogOpen(false); setImportFile(null); }} disabled={isImporting}>
+          <div className="p-4 sm:p-6 bg-zinc-50 border-t border-zinc-100 flex flex-col-reverse sm:flex-row items-center justify-between gap-3 sm:gap-0 sticky bottom-0 z-20">
+            <Button variant="ghost" className="font-bold text-zinc-500 hover:bg-white w-full sm:w-auto" onClick={() => { setIsDialogOpen(false); setImportFile(null); }} disabled={isImporting}>
               Cancel
             </Button>
             <Button 
               onClick={handleImport} 
               disabled={isImporting || (!importJson.trim() && !importFile)}
-              className="bg-blue-700 hover:bg-blue-800 text-white font-black uppercase tracking-tighter px-8 py-6 rounded-xl shadow-xl shadow-blue-200 transition-all"
+              className="bg-blue-700 hover:bg-blue-800 text-white font-black uppercase tracking-tighter px-8 py-4 sm:py-6 rounded-xl shadow-xl shadow-blue-200 transition-all w-full sm:w-auto"
             >
               {isImporting ? "🔄 Processing..." : "Execute Import"}
             </Button>
@@ -492,18 +546,6 @@ const Employee = () => {
         </DialogContent>
       </Dialog>
 
-      {/* -------------------- SEARCH BAR -------------------- */}
-      <div className="relative flex-1 sm:flex-none sm:w-64">
-        <input
-          type="text"
-          placeholder="Search by Name, Phone, Email, PAN, UAN..."
-          value={searchName}
-          onChange={(e) => setSearchName(e.target.value)}
-          className="border p-2 pl-10 rounded w-full text-sm"
-        />
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-          🔍
-        </span>
       </div>
     </div>
   </div>
@@ -513,11 +555,12 @@ const Employee = () => {
           <table className="table-auto w-full border text-sm">
             <thead className="bg-gray-100">
               <tr>
+                <th className="border px-4 py-2">Emp ID</th>
                 <th className="border px-4 py-2">Name</th>
                 <th className="border px-4 py-2">Email</th>
                 <th className="border px-4 py-2">Phone</th>
                 <th className="border px-4 py-2">Company</th>
-                <th className="border px-4 py-2">Job Type</th>
+
                 <th className="border px-4 py-2">Action</th>
               </tr>
             </thead>
@@ -531,16 +574,18 @@ const Employee = () => {
                     (app.email && app.email.toLowerCase().includes(s)) ||
                     (app.phone && app.phone.toLowerCase().includes(s)) ||
                     (app.pan && app.pan.toLowerCase().includes(s)) ||
-                    (app.uan && app.uan.toLowerCase().includes(s))
+                    (app.uan && app.uan.toLowerCase().includes(s)) ||
+                    (app.empId && app.empId.toLowerCase().includes(s))
                   );
                 })
                 .map((app) => (
                   <tr key={app.id}>
+                    <td className="border px-4 py-2">{app.empId || '-'}</td>
                     <td className="border px-4 py-2">{app.name}</td>
                     <td className="border px-4 py-2">{app.email}</td>
                     <td className="border px-4 py-2">{app.phone}</td>
                     <td className="border px-4 py-2">{app.companyName}</td>
-                    <td className="border px-4 py-2">{app.jobType}</td>
+
                     <td className="border px-4 py-2 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button
@@ -570,10 +615,9 @@ const Employee = () => {
         </div>
       )}
 
-      {/* -------------------- EDIT MODAL -------------------- */}
       {editingEmployee && (
         <Dialog open={!!editingEmployee} onOpenChange={() => setEditingEmployee(null)}>
-          <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto rounded-2xl border-none shadow-2xl p-0">
+          <DialogContent className="w-[95vw] max-w-[700px] max-h-[90vh] overflow-y-auto rounded-2xl border-none shadow-2xl p-0">
             <div className="bg-zinc-900 p-8 text-white">
               <h3 className="text-2xl font-black uppercase tracking-tighter">Edit Record</h3>
               <p className="text-zinc-400 text-xs font-bold uppercase tracking-widest mt-1">Updating {editingEmployee.name}</p>
@@ -604,6 +648,18 @@ const Employee = () => {
                   />
                 </div>
               ))}
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">PF Opt Status</label>
+                <select
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all"
+                  value={(editingEmployee as any).pfStatus || "Yes"}
+                  onChange={(e) => setEditingEmployee({ ...editingEmployee, pfStatus: e.target.value })}
+                >
+                  <option value="Yes">With EPF</option>
+                  <option value="No">Without EPF</option>
+                </select>
+              </div>
             </div>
 
             <div className="p-6 bg-zinc-50 border-t border-zinc-100 flex items-center justify-end gap-3 rounded-b-2xl">
@@ -628,7 +684,7 @@ const Employee = () => {
     <div
       className="
         bg-white 
-        w-full 
+        w-[95vw]
         max-w-2xl
         max-h-[85vh]
         overflow-y-auto

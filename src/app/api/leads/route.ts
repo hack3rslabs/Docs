@@ -38,10 +38,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Invalid email format' }, { status: 400 });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedPhone = phone.replace(/\D/g, '');
+
     // Check if lead already exists
     let lead = await prisma.lead.findFirst({
       where: {
-        OR: [{ email }, { phone }],
+        OR: [{ email: normalizedEmail }, { phone: normalizedPhone }],
       },
     });
 
@@ -65,8 +68,8 @@ export async function POST(request: Request) {
     lead = await prisma.lead.create({
       data: {
         name,
-        email,
-        phone,
+        email: normalizedEmail,
+        phone: normalizedPhone,
         applicationToken: token,
         paymentAmount: paymentAmount ? parseFloat(paymentAmount) : 15000,
         paymentStatus: 'Pending'

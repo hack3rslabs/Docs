@@ -373,13 +373,13 @@ const Leads: React.FC = () => {
           value={formData.phone}
           onChange={handleChange}
           placeholder="Phone"
-          className="border p-2 rounded flex-1 min-w-[150px]"
+          className="border p-2 rounded flex-1 min-w-[150px] sm:min-w-[200px]"
         />
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className={`px-4 py-2 rounded text-white ${
-            loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+          className={`px-6 py-2 rounded font-bold transition-all ${
+            loading ? "bg-gray-400 text-white cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 w-full sm:w-auto"
           }`}
         >
           {loading ? "Saving..." : "Submit"}
@@ -582,7 +582,7 @@ const Leads: React.FC = () => {
       {/* -------------------- POPUPS -------------------- */}
       {editingApp && !showAssignPopup && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
+          <div className="bg-white w-[95vw] max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
             {/* Header */}
             <div className="flex justify-between items-center border-b p-6 bg-gradient-to-r from-gray-50 to-white">
               <div>
@@ -606,7 +606,7 @@ const Leads: React.FC = () => {
             <div className="p-8 flex-1 overflow-y-auto bg-white custom-scrollbar">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                 {Object.entries(editingApp).map(([key, value]) => {
-                  if (["id", "createdAt", "updatedAt", "__v", "lead", "leadId", "approved"].includes(key)) return null;
+                  if (["id", "_id", "pfStatus", "hikeDate", "createdAt", "updatedAt", "__v", "lead", "leadId", "approved"].includes(key)) return null;
 
                   // Filter out salary fields to show them in a special table below
                   const salaryFields = ['basic', 'houseRentAllowance', 'statutoryBonus', 'specialAllowance', 'monthlyCtc', 'employerEsi', 'employerPf', 'employeeEsi', 'providentFund', 'professionalTax', 'tds', 'grossSalary', 'totalContribution', 'totalDeduction', 'netTakeHome', 'annualCtc'];
@@ -702,6 +702,23 @@ const Leads: React.FC = () => {
                     </div>
                   );
                 })}
+                
+                {/* PF Status Dropdown (Always visible) */}
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400">
+                    PF Opt Status
+                  </label>
+                  <select
+                    className="w-full px-4 py-3 rounded-xl border font-bold text-sm transition-all shadow-sm focus:ring-4 focus:ring-blue-100 bg-white border-gray-300 text-gray-800 focus:border-blue-500 hover:border-gray-400"
+                    value={(editingApp as any).pfStatus || "Yes"}
+                    onChange={(e) =>
+                      handleEditApp({ ...editingApp, pfStatus: e.target.value })
+                    }
+                  >
+                    <option value="Yes">With EPF</option>
+                    <option value="No">Without EPF</option>
+                  </select>
+                </div>
               </div>
 
               {/* GROSS EARNINGS TABLE SECTION */}
@@ -776,7 +793,7 @@ const Leads: React.FC = () => {
     {/* Popup for Assigning */}
 {showAssignPopup && editingApp && (
   <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="bg-white w-[95vw] max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       
       {/* Header */}
       <div className="px-6 py-4 border-b border-zinc-100 bg-zinc-50 flex justify-between items-center shrink-0">
@@ -796,7 +813,7 @@ const Leads: React.FC = () => {
           <label className="block text-xs font-black uppercase text-zinc-500 tracking-widest">Employee ID</label>
           <input
             type="text"
-            value={empId}
+            value={isCustomEmpId ? empId : "Auto-generated sequentially upon approval"}
             onChange={(e) => {
               if (isCustomEmpId) {
                 setEmpId(e.target.value);
@@ -816,9 +833,13 @@ const Leads: React.FC = () => {
               onChange={(e) => {
                 setIsCustomEmpId(e.target.checked);
                 if (!e.target.checked) {
-                  const originalId = editingApp?.empId || `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
-                  setEmpId(originalId);
-                  setAssignData({ ...assignData, empId: originalId });
+                  // When unchecked, clear empId so backend auto-generates the next in sequence
+                  setEmpId("");
+                  setAssignData({ ...assignData, empId: "" });
+                } else {
+                  // When checked, restore any existing ID or let them type
+                  setEmpId(editingApp?.empId || "");
+                  setAssignData({ ...assignData, empId: editingApp?.empId || "" });
                 }
               }}
               className="w-4 h-4 text-blue-600 rounded border-zinc-300 focus:ring-blue-500"
