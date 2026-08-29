@@ -494,6 +494,7 @@ const ApplicationFormContent = () => {
                 <span className="text-sm">Experience</span>
                 <input
                   name="experience"
+                  value={formData.experience}
                   onChange={handleChange}
                   className="border p-2 rounded w-full"
                 />
@@ -502,6 +503,7 @@ const ApplicationFormContent = () => {
                 <span className="text-sm">Education</span>
                 <input
                   name="education"
+                  value={formData.education}
                   onChange={handleChange}
                   className="border p-2 rounded w-full"
                 />
