@@ -44,6 +44,8 @@ const ApplicationFormContent = () => {
     bankPassbook: File | null;
     panFile: File | null;
     referenceFile: string;
+    experience: string;
+    education: string;
   }>({
     fatherName: "",
     dob: "",
@@ -68,7 +70,28 @@ const ApplicationFormContent = () => {
     bankPassbook: null,
     panFile: null,
     referenceFile: "",
+    experience: "",
+    education: "",
   });
+
+  const DEPARTMENT_MAPPING: Record<string, string[]> = {
+    "IT": [
+      "Desktop Support", "DevOps Engineer", "Sr Software Engineer", 
+      "Associate Engineer", "System Engineer", "System admin", "IT Admin", 
+      "SOC analyst", "Network Engineer", "IT Support engineer", "Technical support associate"
+    ],
+    "IT Operations": [
+      "Desktop Support", "System admin", "IT Admin", "Network Engineer", "IT Support engineer"
+    ],
+    "HR": [
+      "IT Recruiter", "TA-recruiter", "HR Executive"
+    ],
+    "Marketing": [
+      "Business development associate"
+    ]
+  };
+
+  const DEPARTMENTS = Object.keys(DEPARTMENT_MAPPING);
 
   // Fetch lead data
   useEffect(() => {
@@ -167,16 +190,13 @@ const ApplicationFormContent = () => {
         Employee Onboarding Application Form
       </h2>
 
-      {/* TWO COLUMN GRID  */}
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-10"
         encType="multipart/form-data"
       >
-        {/* ---------------- LEFT COLUMN ---------------- */}
         <div className="space-y-10">
 
-          {/* Applicant Details */}
           <section className="border p-4 rounded bg-gray-50">
             <h3 className="text-lg font-semibold mb-4">Applicant Details</h3>
             <div className="space-y-4">
@@ -212,7 +232,6 @@ const ApplicationFormContent = () => {
             </div>
           </section>
 
-          {/* Personal Information */}
           <section className="border p-4 rounded bg-gray-50">
             <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
 
@@ -240,6 +259,7 @@ const ApplicationFormContent = () => {
                 <span className="text-sm">Gender</span>
                 <select
                   name="gender"
+                  value={formData.gender}
                   onChange={handleChange}
                   className="border p-2 rounded w-full"
                 >
@@ -254,6 +274,7 @@ const ApplicationFormContent = () => {
                 <span className="text-sm">Marital Status</span>
                 <select
                   name="maritalStatus"
+                  value={formData.maritalStatus}
                   onChange={handleChange}
                   className="border p-2 rounded w-full"
                 >
@@ -311,12 +332,9 @@ const ApplicationFormContent = () => {
                   className="border p-2 rounded w-full"
                 />
               </label>
-
-
             </div>
           </section>
 
-          {/* Upload Documents */}
           <section className="border p-4 rounded bg-gray-50">
             <h3 className="text-lg font-semibold mb-4">Resume Upload (PDF Only)</h3>
             <label>
@@ -333,29 +351,38 @@ const ApplicationFormContent = () => {
           </section>
         </div>
 
-        {/* ---------------- RIGHT COLUMN ---------------- */}
         <div className="space-y-10">
-          {/* Professional Information */}
           <section className="border p-4 rounded bg-gray-50">
             <h3 className="text-lg font-semibold mb-4">Professional Information</h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label>
-                <span className="text-sm">Designation</span>
-                <input
-                  name="designation"
+                <span className="text-sm">Department</span>
+                <select
+                  name="department"
+                  value={formData.department}
                   onChange={handleChange}
                   className="border p-2 rounded w-full"
-                />
+                >
+                  <option value="">Select Department</option>
+                  {DEPARTMENTS.map((dept) => <option key={dept}>{dept}</option>)}
+                </select>
               </label>
 
               <label>
-                <span className="text-sm">Department</span>
-                <input
-                  name="department"
+                <span className="text-sm">Designation</span>
+                <select
+                  name="designation"
+                  value={formData.designation}
                   onChange={handleChange}
                   className="border p-2 rounded w-full"
-                />
+                  disabled={!formData.department}
+                >
+                  <option value="">Select Designation</option>
+                  {(formData.department && DEPARTMENT_MAPPING[formData.department] || []).map((des) => (
+                    <option key={des}>{des}</option>
+                  ))}
+                </select>
               </label>
 
               <label>
@@ -389,7 +416,6 @@ const ApplicationFormContent = () => {
             </div>
           </section>
 
-          {/* Beneficiary Info */}
           <section className="border p-4 rounded bg-gray-50">
             <h3 className="text-lg font-semibold mb-4">Beneficiary Information</h3>
 
@@ -461,7 +487,28 @@ const ApplicationFormContent = () => {
             </div>
           </section>
 
-          {/* Reference */}
+          <section className="border p-4 rounded bg-gray-50">
+            <h3 className="text-lg font-semibold mb-4">Professional & Academic</h3>
+            <div className="space-y-4">
+              <label className="block">
+                <span className="text-sm">Experience</span>
+                <input
+                  name="experience"
+                  onChange={handleChange}
+                  className="border p-2 rounded w-full"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm">Education</span>
+                <input
+                  name="education"
+                  onChange={handleChange}
+                  className="border p-2 rounded w-full"
+                />
+              </label>
+            </div>
+          </section>
+
           <section className="border p-4 rounded bg-gray-50">
             <h3 className="text-lg font-semibold mb-4">Reference Details</h3>
             <input
@@ -474,7 +521,6 @@ const ApplicationFormContent = () => {
             />
           </section>
 
-          {/* Terms and Conditions */}
           <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-xl mb-4">
             <label className="flex items-start gap-3 cursor-pointer">
               <input 

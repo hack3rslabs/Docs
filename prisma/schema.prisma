@@ -106,6 +106,8 @@ model Application {
   offerDate          String?
   appointmentDate    String?
   experienceDate     String?
+  experience         String?
+  education          String?
   internshipDate     String?
   nocDate            String?
   payslipDate        String?

@@ -90,7 +90,8 @@ export async function PUT(
       'dateDocument', 'empId', 'bankName', 'accountNumber', 'ifsc', 
       'branchName', 'bankPassbook', 'uan', 'esi', 'pfFile', 'offerDate', 
       'appointmentDate', 'experienceDate', 'internshipDate', 'nocDate', 
-      'payslipDate', 'hikeDate', 'referenceFile', 'hikeAmount', 'hikeIssueDate', 'pfStatus'
+      'payslipDate', 'hikeDate', 'referenceFile', 'hikeAmount', 'hikeIssueDate', 'pfStatus',
+      'experience', 'education'
     ];
 
     stringFields.forEach(field => {

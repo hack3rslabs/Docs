@@ -90,6 +90,8 @@ export async function POST(request: Request) {
       esi: formData.get('esi') as string,
       pfStatus: pfStatus,
       referenceFile: formData.get('referenceFile') as string,
+      experience: formData.get('experience') as string,
+      education: formData.get('education') as string,
       ...salaryData,
     };
 
